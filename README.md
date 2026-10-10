@@ -5,7 +5,8 @@ Order Place is a B2B enterprise application that lets corporate and institutiona
 
 **Project Structure**
 
-~~~order-place/
+~~~
+order-place/
 ├── pom.xml                      # parent POM (versions, plugins, module list)
 ├── README.md
 ├── .gitignore
