@@ -1,0 +1,5 @@
+# Active with SPRING_PROFILES_ACTIVE=docker. Container hostnames replace localhost.
+spring:
+  config:
+    activate:
+      on-profile: docker

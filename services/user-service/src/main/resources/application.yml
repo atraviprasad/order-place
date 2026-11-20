@@ -1,0 +1,42 @@
+server:
+  port: 8081
+  servlet:
+    context-path: /api/v1
+spring:
+  application:
+    name: user-service
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${JWT_ISSUER_URI:http://localhost:8180/realms/orderplace}
+          jwk-set-uri: ${JWT_JWK_SET_URI:http://localhost:8180/realms/orderplace/protocol/openid-connect/certs}
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/user_db}
+    username: ${POSTGRES_USER:orderplace}
+    password: ${POSTGRES_PASSWORD:change_me_postgres}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate.jdbc.time_zone: UTC
+  flyway:
+    enabled: true
+    locations: classpath:db/migration,classpath:db/dev
+keycloak:
+  base-url: ${KEYCLOAK_BASE_URL:http://localhost:8180}
+  realm: orderplace
+  client-id: orderplace-user-service
+  client-secret: ${KEYCLOAK_CLIENT_SECRET:dev-user-service-secret}
+services:
+    # Base URL of the Dealer Service including its context path. Docker: http://dealer-service:8083/api/v1
+  dealer-url: ${DEALER_API_URL:http://localhost:8083/api/v1}
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+logging:
+  pattern:
+    level: "%5p [%X{correlationId:-}]"

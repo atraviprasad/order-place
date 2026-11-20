@@ -1,0 +1,60 @@
+server:
+  port: 8085
+  servlet:
+    context-path: /api/v1
+spring:
+  application:
+    name: payment-service
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${JWT_ISSUER_URI:http://localhost:8180/realms/orderplace}
+          jwk-set-uri: ${JWT_JWK_SET_URI:http://localhost:8180/realms/orderplace/protocol/openid-connect/certs}
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/payment_db}
+    username: ${POSTGRES_USER:orderplace}
+    password: ${POSTGRES_PASSWORD:change_me_postgres}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate.jdbc.time_zone: UTC
+  flyway:
+    enabled: true
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP:localhost:29092}
+    producer:
+      acks: all
+      properties:
+        enable.idempotence: true
+    consumer:
+      group-id: payment-service
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+  task:
+    scheduling:
+      pool:
+        size: 2
+services:
+  order-url: ${ORDER_URL:http://localhost:8084/api/v1}      # includes the /api/v1 context path
+razorpay:
+  base-url: https://api.razorpay.com/v1
+  # SANDBOX ONLY. Test keys start with rzp_test_. The service refuses to work with any other key.
+  # Never commit real values: set them in your .env / environment.
+  key-id: ${RAZORPAY_KEY_ID:rzp_test_xxxxxxxx}
+  key-secret: ${RAZORPAY_KEY_SECRET:xxxxxxxx}
+  webhook-secret: ${RAZORPAY_WEBHOOK_SECRET:xxxxxxxx}
+payments:
+  outbox:
+    poll-interval-ms: 1000
+    batch-size: 50
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+logging:
+  pattern:
+    level: "%5p [%X{correlationId:-}]"

@@ -1,0 +1,50 @@
+server:
+  port: 8080
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      server:
+        webflux:
+          routes:
+          - id: user
+            uri: ${USER_URL:http://localhost:8081}
+            predicates:
+              - Path=/api/v1/users/**,/api/v1/customers/**
+          - id: dealer
+            uri: ${DEALER_URL:http://localhost:8083}
+            predicates:
+              - Path=/api/v1/dealers/**
+          - id: catalog
+            uri: ${CATALOG_URL:http://localhost:8082}
+            predicates:
+              - Path=/api/v1/products/**,/api/v1/categories/**
+          - id: order
+            uri: ${ORDER_URL:http://localhost:8084}
+            predicates:
+              - Path=/api/v1/orders/**,/api/v1/dealer/orders/**,/api/v1/admin/orders/**
+          - id: payment
+            uri: ${PAYMENT_URL:http://localhost:8085}
+            predicates:
+              - Path=/api/v1/payments/**,/api/v1/admin/payments/**,/api/v1/webhooks/**
+          - id: notification
+            uri: ${NOTIFICATION_URL:http://localhost:8086}
+            predicates:
+              - Path=/api/v1/admin/notifications/**
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${JWT_ISSUER_URI:http://localhost:8180/realms/orderplace}
+          jwk-set-uri: ${JWT_JWK_SET_URI:http://localhost:8180/realms/orderplace/protocol/openid-connect/certs}
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: 6379
+      password: ${REDIS_PASSWORD:change_me_redis}
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
