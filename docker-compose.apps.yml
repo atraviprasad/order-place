@@ -1,0 +1,137 @@
+name: orderplace
+
+# Run with: docker compose -f docker-compose.yml -f docker-compose.apps.yml up -d --build
+# Day to day, run the service you are working on from the IDE and keep the rest here.
+
+services:
+  api-gateway:
+    build:
+      context: .
+      dockerfile: services/api-gateway/Dockerfile
+    container_name: op-api-gateway
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      JWT_ISSUER_URI: http://localhost:${KEYCLOAK_PORT:-8180}/realms/orderplace
+      JWT_JWK_SET_URI: http://keycloak:8080/realms/orderplace/protocol/openid-connect/certs
+      REDIS_HOST: redis
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      USER_URL: http://user-service:8081
+      DEALER_URL: http://dealer-service:8083
+      CATALOG_URL: http://catalog-service:8082
+      ORDER_URL: http://order-service:8084
+      PAYMENT_URL: http://payment-service:8085
+      NOTIFICATION_URL: http://notification-service:8086
+    ports:
+      - "8080:8080"
+    networks: [orderplace-net]
+
+  user-service:
+    build:
+      context: .
+      dockerfile: services/user-service/Dockerfile
+    container_name: op-user-service
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      DB_URL: jdbc:postgresql://postgres:5432/user_db
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      JWT_ISSUER_URI: http://localhost:${KEYCLOAK_PORT:-8180}/realms/orderplace
+      JWT_JWK_SET_URI: http://keycloak:8080/realms/orderplace/protocol/openid-connect/certs
+    ports:
+      - "8081:8081"
+    networks: [orderplace-net]
+
+  catalog-service:
+    build:
+      context: .
+      dockerfile: services/catalog-service/Dockerfile
+    container_name: op-catalog-service
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      DB_URL: jdbc:postgresql://postgres:5432/catalog_db
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      JWT_ISSUER_URI: http://localhost:${KEYCLOAK_PORT:-8180}/realms/orderplace
+      JWT_JWK_SET_URI: http://keycloak:8080/realms/orderplace/protocol/openid-connect/certs
+      REDIS_HOST: redis
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    ports:
+      - "8082:8082"
+    networks: [orderplace-net]
+
+  dealer-service:
+    build:
+      context: .
+      dockerfile: services/dealer-service/Dockerfile
+    container_name: op-dealer-service
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      DB_URL: jdbc:postgresql://postgres:5432/dealer_db
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      JWT_ISSUER_URI: http://localhost:${KEYCLOAK_PORT:-8180}/realms/orderplace
+      JWT_JWK_SET_URI: http://keycloak:8080/realms/orderplace/protocol/openid-connect/certs
+    ports:
+      - "8083:8083"
+    networks: [orderplace-net]
+
+  order-service:
+    build:
+      context: .
+      dockerfile: services/order-service/Dockerfile
+    container_name: op-order-service
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      DB_URL: jdbc:postgresql://postgres:5432/order_db
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      JWT_ISSUER_URI: http://localhost:${KEYCLOAK_PORT:-8180}/realms/orderplace
+      JWT_JWK_SET_URI: http://keycloak:8080/realms/orderplace/protocol/openid-connect/certs
+      KAFKA_BOOTSTRAP: kafka:9092
+      CATALOG_URL: http://catalog-service:8082
+      DEALER_URL: http://dealer-service:8083
+    ports:
+      - "8084:8084"
+    networks: [orderplace-net]
+
+  payment-service:
+    build:
+      context: .
+      dockerfile: services/payment-service/Dockerfile
+    container_name: op-payment-service
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      DB_URL: jdbc:postgresql://postgres:5432/payment_db
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      JWT_ISSUER_URI: http://localhost:${KEYCLOAK_PORT:-8180}/realms/orderplace
+      JWT_JWK_SET_URI: http://keycloak:8080/realms/orderplace/protocol/openid-connect/certs
+      KAFKA_BOOTSTRAP: kafka:9092
+      RAZORPAY_KEY_ID: ${RAZORPAY_KEY_ID}
+      RAZORPAY_KEY_SECRET: ${RAZORPAY_KEY_SECRET}
+      RAZORPAY_WEBHOOK_SECRET: ${RAZORPAY_WEBHOOK_SECRET}
+    ports:
+      - "8085:8085"
+    networks: [orderplace-net]
+
+  notification-service:
+    build:
+      context: .
+      dockerfile: services/notification-service/Dockerfile
+    container_name: op-notification-service
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      MONGO_URI: mongodb://${MONGO_ROOT_USER}:${MONGO_ROOT_PASSWORD}@mongodb:27017/notification_db?authSource=admin
+      KAFKA_BOOTSTRAP: kafka:9092
+      MAIL_HOST: mailpit
+    ports:
+      - "8086:8086"
+    networks: [orderplace-net]
+
+networks:
+  orderplace-net:
+    external: true
+    name: orderplace-net
