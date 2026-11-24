@@ -31,6 +31,7 @@ order-place/
 ├── frontend/                    # React app (later)
 ├── docs/                        # requirements, architecture, API, diagrams
 └── .github/workflows/           # CI pipelines
+~~~
 
 ## Order workflow
 
